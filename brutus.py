@@ -28,6 +28,7 @@ import sys
 import time
 import re
 import multiprocessing
+import binascii
 
 from common import target, symbols
 
@@ -35,15 +36,38 @@ from common import target, symbols
 host_addr = 'beef.olin.edu'
 host_port = 1013
 
+bytesDiff = dict()
+for i in range(256):
+	high = 0;
+	for j in range(8):
+		high += (i >> j) & 1
+	bytesDiff[i] = high
+
 def hamming_distance(lh, rh):
-	lhb = bin(int(lh,16))[2:]
-	rhb = bin(int(rh,16))[2:]
-	ll, lr = len(lhb), len(rhb)
-	if ll < lr:
-		lhb = '0'*(lr-ll) + lhb
-	elif lr < ll:
-		rhb = '0'*(ll-lr) + rhb
-	return sum((x != y) for (x, y) in zip(lhb, rhb))
+	'''
+	Return the binary hamming distance between two hex strings.
+	'''
+	if(len(lh) % 2 != 0):
+		a = [0]
+		a.extend(lh)
+		lh = a
+	if (len(rh) % 2 != 0):
+		a = [0]
+		a.extend(rh)
+		rh = a
+
+	lhb = binascii.unhexlify(lh)
+	rhb = binascii.unhexlify(rh)
+
+	if len(lhb)<len(rhb):
+		a = [0] * (len(rhb)-len(lhb))
+		a.extend(lhb)
+		lhb = a
+	if len(rhb)<len(lhb):
+		a = [0]*(len(lhb)-len(rhb))
+		a.extend(rhb)
+		rhb = a
+	return sum((bytesDiff[x ^ y]) for (x, y) in zip(lhb, rhb))
 
 def nth_plaintext(radix, n):
 	syms = []
