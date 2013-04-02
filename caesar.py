@@ -33,13 +33,14 @@ chunk_size = 5000
 from common import target, symbols
 
 def main():
-	state = shelve.open('caesar.dat')
+	state = shelve.open('caesar')
 
-	state['radix'] = state.get('radix', 1)
+	state['radix'] = state.get('radix', 6)
 	state['p'] = state.get('p', 0)
-	state['min'] = state.get('min', 10000)
+	state['min'] = state.get('min', 418)
 	state['min_text'] = state.get('min_text', 'butt')
 	state['strays'] = state.get('strays', [])
+	state['results'] = state.get('results', [])
 
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
 	s.bind(('0.0.0.0', 1013))
@@ -97,7 +98,8 @@ def main():
 							state['min_text'] = text
 							print('!! NEW MINIMUM: %d (%s)' % (dist, text))
 							requests.post("http://almamater.xkcd.com/?edu=olin.edu", {'hashable': text})
-						state['res_%r'%(client_chunk[client],)] = (dist,text)
+						state['results'].append((client_chunk[client], dist,text))
+						state.sync()
 					except Exception as e:
 						print(e)
 						dead.append(client)
