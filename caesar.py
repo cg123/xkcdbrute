@@ -30,7 +30,7 @@ import requests
 
 chunk_size = 5000
 
-from common import target, symbols
+from common import target, symbols, plaintext_score
 
 def main():
 	state = shelve.open('caesar')
@@ -94,10 +94,14 @@ def main():
 						(dist, text) = res.split(',')
 						dist = int(dist)
 						if dist < state['min']:
-							state['min'] = dist
-							state['min_text'] = text
-							print('!! NEW MINIMUM: %d (%s)' % (dist, text))
-							requests.post("http://almamater.xkcd.com/?edu=olin.edu", {'hashable': text})
+							calc = plaintext_score(text)
+							if calc != dist:
+								print('HO SHIT BAD RESULT:', text, dist, calc)
+							else:
+								state['min'] = dist
+								state['min_text'] = text
+								print('!! NEW MINIMUM: %d (%s)' % (dist, text))
+								requests.post("http://almamater.xkcd.com/?edu=olin.edu", {'hashable': text})
 						state['results'].append((client_chunk[client], dist,text))
 						state.sync()
 					except Exception as e:
@@ -110,7 +114,7 @@ def main():
 						client_sockets.remove(client)
 
 			for client in dead:
-				print(client.getsockname(), 'died, orphaned', client_chunk[client])
+				#print(client.getsockname(), 'died, orphaned', client_chunk[client])
 				state['strays'] = state['strays'] + [client_chunk[client]]
 				del client_chunk[client]
 				del client_buf[client]

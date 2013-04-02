@@ -30,44 +30,11 @@ import re
 import multiprocessing
 import binascii
 
-from common import target, symbols
+from common import target, symbols, plaintext_score
 
 # Controller address
 host_addr = 'beef.olin.edu'
 host_port = 1013
-
-bytesDiff = dict()
-for i in range(256):
-	high = 0;
-	for j in range(8):
-		high += (i >> j) & 1
-	bytesDiff[i] = high
-
-def hamming_distance(lh, rh):
-	'''
-	Return the binary hamming distance between two hex strings.
-	'''
-	if(len(lh) % 2 != 0):
-		a = [0]
-		a.extend(lh)
-		lh = a
-	if (len(rh) % 2 != 0):
-		a = [0]
-		a.extend(rh)
-		rh = a
-
-	lhb = binascii.unhexlify(lh)
-	rhb = binascii.unhexlify(rh)
-
-	if len(lhb)<len(rhb):
-		a = [0] * (len(rhb)-len(lhb))
-		a.extend(lhb)
-		lhb = a
-	if len(rhb)<len(lhb):
-		a = [0]*(len(lhb)-len(rhb))
-		a.extend(rhb)
-		rhb = a
-	return sum((bytesDiff[x ^ y]) for (x, y) in zip(lhb, rhb))
 
 def nth_plaintext(radix, n):
 	syms = []
@@ -79,10 +46,6 @@ def nth_plaintext(radix, n):
 def plaintext_range(radix, min_p, max_p):
 	for p in range(min_p, max_p):
 		yield nth_plaintext(radix, p)
-
-def plaintext_score(pt):
-	hash_ = skein.skein1024(pt.encode(), digest_bits=1024).hexdigest()
-	return hamming_distance(hash_, target)
 
 def closest_in_set(plaintexts):
 	min_score = 1000000
