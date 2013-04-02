@@ -35,18 +35,27 @@ from common import target, symbols
 host_addr = 'beef.olin.edu'
 host_port = 1013
 
+# Precalculate hamming distances of hex digits
+hd_digits = {}
+for lh in '0123456789abcdef':
+	for rh in '0123456789abcdef':
+		xor = int(lh,16) ^ int(rh, 16)
+		ct = 0
+		while xor > 0:
+			ct = ct + 1
+			xor = xor // 2
+		hd_digits[lh,rh] = ct
+
 def hamming_distance(lh, rh):
 	'''
 	Return the binary hamming distance between two hex strings.
 	'''
-	lhb = bin(int(lh,16))[2:]
-	rhb = bin(int(rh,16))[2:]
-	ll, lr = len(lhb), len(rhb)
+	ll, lr = len(lh), len(rh)
 	if ll < lr:
-		lhb = '0'*(len(rhb)-len(lhb)) + lhb
+		lh = '0'*(lr-ll) + lh
 	elif lr < ll:
-		rhb = '0'*(len(lhb)-len(rhb)) + rhb
-	return sum((x != y) for (x, y) in zip(lhb, rhb))
+		rh = '0'*(ll-lr) + rh
+	return sum(hd_digits[x,y] for (x, y) in zip(lh, rh))
 
 def nth_plaintext(radix, n):
 	syms = []
