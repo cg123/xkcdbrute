@@ -123,6 +123,7 @@ def main():
 
 
 	except KeyboardInterrupt:
+		s.close()
 		return 1
 
 	return 0
