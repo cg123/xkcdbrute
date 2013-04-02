@@ -77,17 +77,22 @@ class Brutus(multiprocessing.Process):
 		while True:
 			try:
 				server = socket.create_connection((host_addr, host_port), 5)
+				assignment = server.recv(4096)
+				while not '\n' in assignment.decode():
+					assignment = assignment + server.recv(4096)
+				(radix, minp, maxp) = assignment.decode().rstrip('\n').split(',')
+				(text, score) = closest_in_set(plaintext_range(int(radix), int(minp), int(maxp)))
+				print (self.number, text, score)
+				server.send(('%d,%s\n' % (score, text)).encode())
 			except socket.error as e:
 				print('socket.error:', e)
-				time.sleep(5)
-				continue
-			assignment = server.recv(4096)
-			while not '\n' in assignment.decode():
-				assignment = assignment + server.recv(4096)
-			(radix, minp, maxp) = assignment.decode().rstrip('\n').split(',')
-			(text, score) = closest_in_set(plaintext_range(int(radix), int(minp), int(maxp)))
-			print (self.number, text, score)
-			server.send(('%d,%s\n' % (score, text)).encode())
+				time.sleep(15)
+			except KeyboardInterrupt:
+				break
+			except Exception as e:
+				print('Unexpected error:', e)
+				time.sleep(60)
+
 
 def main():
 	processes = []
