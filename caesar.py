@@ -75,10 +75,15 @@ def main():
 
 			(read,write,dead) = select.select(client_sockets,client_sockets,client_sockets, 0)
 			for client in read:
-				new = client.recv(4096)
-				if not new:
+				try:
+					new = client.recv(4096)
+					if not new:
+						dead.append(client)
+						continue
+				except socket.error:
 					dead.append(client)
 					continue
+
 				buf = client_buf[client]
 				buf = buf + new
 				client_buf[client] = buf
