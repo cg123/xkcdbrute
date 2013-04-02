@@ -28,7 +28,7 @@ import select
 
 import requests
 
-chunk_size = 5000
+chunk_size = 15000
 
 from common import target, symbols, plaintext_score
 
