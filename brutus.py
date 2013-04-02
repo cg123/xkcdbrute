@@ -26,6 +26,7 @@ import skein
 import socket
 import sys
 import time
+import multiprocessing
 
 from common import target, symbols
 
@@ -72,24 +73,35 @@ def closest_in_set(plaintexts):
 	return (winner, min_score)
 
 
+class Brutus(multiprocessing.Process):
+	def run(self):
+		print('-- BRUTUS', self.number, '--')
+		while True:
+			try:
+				server = socket.create_connection((host_addr, host_port), 5)
+			except socket.error as e:
+				print('socket.error:', e)
+				time.sleep(5)
+				continue
+			assignment = server.recv(4096)
+			while not '\n' in assignment.decode():
+				assignment = assignment + server.recv(4096)
+			(radix, minp, maxp) = assignment.decode().rstrip('\n').split(',')
+			(text, score) = closest_in_set(plaintext_range(int(radix), int(minp), int(maxp)))
+			print (self.number, text, score)
+			server.send(('%d,%s\n' % (score, text)).encode())
+
 def main():
-	print('-- BRUTUS --')
-	while True:
-		try:
-			server = socket.create_connection((host_addr, host_port), 5)
-		except socket.error as e:
-			print('socket.error:', e)
-			time.sleep(5)
-			continue
-		assignment = server.recv(4096)
-		while not '\n' in assignment.decode():
-			assignment = assignment + server.recv(4096)
-		(radix, minp, maxp) = assignment.decode().rstrip('\n').split(',')
-		(text, score) = closest_in_set(plaintext_range(int(radix), int(minp), int(maxp)))
-		print (text, score)
-		server.send(('%d,%s\n' % (score, text)).encode())
-
-
+	processes = []
+	try:
+		cpus = multiprocessing.cpu_count() + 1
+	except NotImplementedError:
+		cpus = 3
+	for i in range(1, cpus + 1):
+		proc = Brutus()
+		proc.number = i
+		proc.start()
+		processes.append(proc)
 
 
 if __name__=='__main__':
