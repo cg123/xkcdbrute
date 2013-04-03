@@ -88,9 +88,9 @@ def main():
 				buf = client_buf[client]
 				buf = buf + new
 				client_buf[client] = buf
-				if '\n' in buf.decode():
-					try:
-						res = buf.decode().rstrip('\n')
+				try:
+					if '\n' in buf.decode('ascii'):
+						res = buf.decode('ascii').rstrip('\n')
 						(dist, text) = res.split(',')
 						dist = int(dist)
 						if dist < state['min']:
@@ -104,14 +104,14 @@ def main():
 								requests.post("http://almamater.xkcd.com/?edu=olin.edu", {'hashable': text})
 						state['results'].append((client_chunk[client], dist,text))
 						state.sync()
-					except Exception as e:
-						print(e)
-						dead.append(client)
-					else:
+						
 						client.close()
 						del client_chunk[client]
 						del client_buf[client]
 						client_sockets.remove(client)
+				except Exception as e:
+					print(e)
+					dead.append(client)
 
 			for client in dead:
 				#print(client.getsockname(), 'died, orphaned', client_chunk[client])
